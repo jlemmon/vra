@@ -1,0 +1,43 @@
+---
+project: JL-Sandbox
+kind: PIPELINE
+name: Set Up Docker Host for Code Stream
+icon: organization,left, is-pink is-solid
+enabled: true
+concurrency: 10
+workspace:
+  endpoint: ''
+  image: ''
+  registry: ''
+  path: ''
+  autoCloneForTrigger: false
+  limits:
+    cpu: 1.0
+    memory: 512
+stageOrder:
+- Setup
+stages:
+  Setup:
+    taskOrder:
+    - Log Into CodeStream
+    - Get Endpoints
+    tasks:
+      Log Into CodeStream:
+        type: REST
+        input:
+          action: post
+          url: https://api.mgmt.cloud.vmware.com/iaas/api/login
+          headers:
+            Accept: application/json
+            Content-Type: application/json
+          payload: "{\n\t\"refreshToken\": \"${var.vrac-codestream-token}\"\n}"
+      Get Endpoints:
+        type: REST
+        input:
+          action: get
+          url: https://api.mgmt.cloud.vmware.com/pipeline/api/endpoints
+          headers:
+            Accept: application/json
+            Content-Type: application/json
+            Authorization: ${Setup.Log Into CodeStream.output.responseJson}
+          payload: ''

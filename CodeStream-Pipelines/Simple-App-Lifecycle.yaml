@@ -1,0 +1,106 @@
+---
+project: JL-Sandbox
+kind: PIPELINE
+name: Simple-App-Lifecycle
+icon: organization,left, is-success is-solid
+enabled: false
+concurrency: 10
+workspace:
+  endpoint: Sandbox-Docker-Endpoint
+  image: vmwarecna/nginx
+  registry: ''
+  path: ''
+  autoCloneForTrigger: false
+  limits:
+    cpu: 1.0
+    memory: 512
+stageOrder:
+- Dev_cloud_account_1
+- Prod - Cloud account B
+stages:
+  Dev_cloud_account_1:
+    taskOrder:
+    - Build App
+    - Build Testing Infra
+    - Execute Selenium Test
+    - Approve for Prod
+    - Tear Down App,Tear Down Testing Infra
+    tasks:
+      Tear Down App:
+        type: Blueprint
+        input:
+          action: DeleteDeployment
+          deploymentName: ${Dev_cloud_account_1.Build App.output.deploymentName}
+      Tear Down Testing Infra:
+        type: Blueprint
+        input:
+          action: DeleteDeployment
+          deploymentName: ${Dev_cloud_account_1.Build Testing Infra.output.deploymentName}
+          _deploymentFlag: false
+      Build Testing Infra:
+        type: Blueprint
+        input:
+          action: CreateDeployment
+          blueprint: Selenium
+          deploymentName: Selenium-${executionId}
+          parameters:
+            image: ubuntu-2
+            environment: org:jrl
+            size: medium
+            clusterSize: small
+          version: '2.0'
+          filepath: ''
+      Execute Selenium Test:
+        type: CI
+        input:
+          steps:
+          - echo test
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Build App:
+        type: Blueprint
+        input:
+          action: CreateDeployment
+          blueprint: Selenium
+          deploymentName: Util-${executionId}
+          parameters:
+            image: ubuntu-2
+            environment: org:jrl
+            size: medium
+            clusterSize: small
+          version: '2.0'
+          filepath: ''
+      Approve for Prod:
+        type: UserOperation
+        input:
+          approvers:
+          - jlemmon@vmware.com
+          approverGroups:
+          - jlemmon@vmware.com
+          summary: Approve build/deploy
+          description: ''
+          sendemail: false
+          expiration: 3
+          expirationUnit: DAYS
+          pipelineName: ${name}
+          cancelPreviousPendingUserOp: false
+  Prod - Cloud account B:
+    taskOrder:
+    - Deploy App to Prod
+    tasks:
+      Deploy App to Prod:
+        type: Blueprint
+        input:
+          action: CreateDeployment
+          blueprint: JL-Sandbox-Multicloud
+          deploymentName: Prod-${executionId}
+          parameters:
+            cloud: org:jrl
+            flavor: medium
+            Web_Server_Count: 1
+          version: '1.0'
+          filepath: ''

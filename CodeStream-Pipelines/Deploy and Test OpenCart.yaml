@@ -1,0 +1,87 @@
+---
+project: JL-Sandbox
+kind: PIPELINE
+name: Deploy and Test OpenCart
+icon: organization,left, is-pink
+enabled: true
+concurrency: 10
+workspace:
+  endpoint: Temp-Docker-AWS
+  image: jlemmon/selenium-headless
+  registry: ''
+  path: /tmp
+  cache:
+  - /tmp
+  autoCloneForTrigger: false
+  limits:
+    cpu: 1.0
+    memory: 1024
+stageOrder:
+- Dev
+stages:
+  Dev:
+    taskOrder:
+    - Deploy Test App
+    - Wait for Full Deployment
+    - Test Deployment
+    - Wait before Deletion
+    - Tear Down App
+    tasks:
+      Tear Down App:
+        type: Blueprint
+        input:
+          action: DeleteDeployment
+          deploymentName: ${Dev.Deploy Test App.output.deploymentName}
+      Wait for Full Deployment:
+        type: CI
+        input:
+          steps:
+          - sleep 240
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Wait before Deletion:
+        type: UserOperation
+        input:
+          approvers:
+          - jlemmon@vmware.com
+          approverGroups: [
+            ]
+          summary: Validate deployment
+          description: |
+            "testing http://${Dev.Deploy Test App.output.deploymentDetails.resources['Cloud_LoadBalancer_1'].address}"
+          sendemail: false
+          expiration: 1
+          expirationUnit: DAYS
+          pipelineName: ${name}
+          cancelPreviousPendingUserOp: false
+      Deploy Test App:
+        type: Blueprint
+        input:
+          action: CreateDeployment
+          blueprint: JL-Sandbox-Multicloud
+          deploymentName: ''
+          parameters:
+            cloud: org:jrl
+            flavor: small
+            Web_Server_Count: 1
+          version: '2.0'
+          filepath: ''
+      Test Deployment:
+        type: CI
+        input:
+          steps:
+          - echo "testing http://${Dev.Deploy Test App.output.deploymentDetails.resources['Cloud_LoadBalancer_1'].address}"
+          - ''
+          - python3 /home/seluser/test/cicd_scripts/testUrl.py http://${Dev.Deploy Test App.output.deploymentDetails.resources['Cloud_LoadBalancer_1'].address}
+          - ''
+          - echo "complete"
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]

@@ -1,0 +1,402 @@
+---
+project: JL-Sandbox
+kind: PIPELINE
+name: Sandbox - Java Example
+icon: organization,left,  is-solid
+enabled: false
+description: Example CI CD pipeline for a Java App
+concurrency: 10
+workspace:
+  endpoint: Sandbox-Docker-Endpoint
+  image: dev_null
+  registry: ''
+  path: ''
+  autoCloneForTrigger: false
+  limits:
+    cpu: 1.0
+    memory: 512
+stageOrder:
+- Dev
+- Staging
+- Prod
+stages:
+  Prod:
+    taskOrder:
+    - Build Infrastructure using IaaC,Build Artifact
+    - Deploy to Infra
+    - Vulnerability Testing,Pen Testing,Instrument for Monitoring
+    - Store artifact to repository,Ensure monitoring,Fingerprint for Compliance
+    - Update Cybersecurity DB
+    - Update NOC
+    tasks:
+      Instrument for Monitoring:
+        type: CI
+        input:
+          steps:
+          - echo 'monitoring' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Vulnerability Testing:
+        type: CI
+        input:
+          steps:
+          - echo 'vulnerability' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Build Infrastructure using IaaC:
+        type: Blueprint
+        input:
+          action: CreateDeployment
+          blueprint: JL-Sandbox-RDS-Example
+          deploymentName: sb-java-${executionId}${executionId}
+          parameters:
+            instance_size: db.t3.small
+            master_password: VMware1!VMware1!
+            deploy_region: us-west-2
+            master_username: dbadmin
+          version: '1.1'
+          filepath: ''
+      Ensure monitoring:
+        type: CI
+        input:
+          steps:
+          - echo 'ensure monitoring' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Build Artifact:
+        type: CI
+        input:
+          steps:
+          - echo 'build_artifact' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Pen Testing:
+        type: CI
+        input:
+          steps:
+          - echo 'pen test' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Update Cybersecurity DB:
+        type: CI
+        input:
+          steps:
+          - echo 'cyber' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Fingerprint for Compliance:
+        type: CI
+        input:
+          steps:
+          - echo 'fingerprint' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Store artifact to repository:
+        type: CI
+        input:
+          steps:
+          - echo 'store_artifact' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Update NOC:
+        type: UserOperation
+      Deploy to Infra:
+        type: CI
+        input:
+          steps:
+          - echo 'deploy' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+  Dev:
+    taskOrder:
+    - Build Artifact
+    - Static Analysis,Build Infrastructure using IaaC
+    - Deploy to Infra
+    - Dynamic Analysis,Vulnerability Testing
+    - Approve for Staging,Store artifact to repository
+    - Fingerprint for Compliance,Update Cybersecurity DB
+    tasks:
+      Vulnerability Testing:
+        type: CI
+        input:
+          steps:
+          - echo 'vulnerability' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Build Infrastructure using IaaC:
+        type: Blueprint
+        input:
+          action: CreateDeployment
+          blueprint: JL-Sandbox-RDS-Example
+          deploymentName: sb-java-${executionId}${executionId}
+          parameters:
+            instance_size: db.t3.small
+            master_password: VMware1!VMware1!
+            deploy_region: us-west-2
+            master_username: dbadmin
+          version: '1.1'
+          filepath: ''
+      Approve for Staging:
+        type: UserOperation
+      Build Artifact:
+        type: CI
+        input:
+          steps:
+          - echo 'build_artifact' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Update Cybersecurity DB:
+        type: CI
+        input:
+          steps:
+          - echo 'cyber' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Dynamic Analysis:
+        type: CI
+        input:
+          steps:
+          - echo 'DAST' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Fingerprint for Compliance:
+        type: CI
+        input:
+          steps:
+          - echo 'fingerprint' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Static Analysis:
+        type: CI
+        input:
+          steps:
+          - echo 'Static analysis' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Store artifact to repository:
+        type: CI
+        input:
+          steps:
+          - echo 'store_artifact' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Deploy to Infra:
+        type: CI
+        input:
+          steps:
+          - echo 'deploy' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+  Staging:
+    taskOrder:
+    - Build Infrastructure using IaaC,Build Artifact
+    - Deploy to Infra
+    - Dynamic Analysis,Vulnerability Testing,Pen Testing,Performance Testing,Instrument for Monitoring
+    - Store artifact to repository,Ensure monitoring
+    - Fingerprint for Compliance,Update Cybersecurity DB
+    - Approve for Staging
+    tasks:
+      Instrument for Monitoring:
+        type: CI
+        input:
+          steps:
+          - echo 'monitoring' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Build Infrastructure using IaaC:
+        type: Blueprint
+        input:
+          action: CreateDeployment
+          blueprint: JL-Sandbox-RDS-Example
+          deploymentName: sb-java-${executionId}${executionId}
+          parameters:
+            instance_size: db.t3.small
+            master_password: VMware1!VMware1!
+            deploy_region: us-west-2
+            master_username: dbadmin
+          version: '1.1'
+          filepath: ''
+      Ensure monitoring:
+        type: CI
+        input:
+          steps:
+          - echo 'ensure monitoring' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Approve for Staging:
+        type: UserOperation
+      Build Artifact:
+        type: CI
+        input:
+          steps:
+          - echo 'build_artifact' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Pen Testing:
+        type: CI
+        input:
+          steps:
+          - echo 'pen test' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Dynamic Analysis:
+        type: CI
+        input:
+          steps:
+          - echo 'DAST' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Fingerprint for Compliance:
+        type: CI
+        input:
+          steps:
+          - echo 'fingerprint' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Deploy to Infra:
+        type: CI
+        input:
+          steps:
+          - echo 'deploy' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Performance Testing:
+        type: CI
+        input:
+          steps:
+          - echo 'performance testing' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Vulnerability Testing:
+        type: CI
+        input:
+          steps:
+          - echo 'vulnerability' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Update Cybersecurity DB:
+        type: CI
+        input:
+          steps:
+          - echo 'cyber' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
+      Store artifact to repository:
+        type: CI
+        input:
+          steps:
+          - echo 'store_artifact' >> /tmp/status
+          export: [
+            ]
+          artifacts: [
+            ]
+          process: [
+            ]
