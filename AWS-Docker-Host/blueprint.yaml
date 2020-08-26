@@ -1,0 +1,103 @@
+# *************************************************************************
+# 
+# This template creates a Docker host on EC2 and sets the correct SG 
+#     settings to allow it to be accessible.  It creates a "cicd" user
+#     that runs the docker service.
+# SETUP/PREREQS:
+#    * org:jrl tags are used for the cloud zone and network.  This 
+#              can be adjusted in the inputs
+#    * amazon-linux image must be mapped to an Amazon Linux AMI
+# 
+# *************************************************************************
+formatVersion: 1
+inputs:
+  environment:
+    type: string
+    enum:
+      - 'org:jrl'
+    default: 'org:jrl'
+    title: Select Environment for Deployment
+    description: Target Environment
+  image:
+    type: string
+    enum:
+      - amazon-linux
+      - ubuntu-2
+    default: amazon-linux
+    title: Select Image/OS
+  size:
+    type: string
+    enum:
+      - small
+      - medium
+      - large
+    default: medium
+    description: Size of Nodes
+    title: Node Size
+resources:
+  docker-sg:
+    type: Cloud.SecurityGroup
+    metadata:
+      layoutPosition:
+        - 0
+        - 0
+    properties:
+      securityGroupType: existing
+      constraints:
+        - tag: 'sg:docker'
+  docker_host:
+    type: Cloud.Machine
+    metadata:
+      layoutPosition:
+        - 0
+        - 1
+    properties:
+      flavor: '${input.size}'
+      image: '${input.image}'
+      name: '${self.resourceName}'
+      networks:
+        - network: '${resource.Cloud_Network_1.id}'
+          securityGroups:
+            - '${resource["docker-sg"].id}'
+      cloudConfig: |
+        repo_update: true
+        repo_upgrade: all
+        apt_source:
+          - source: deb http://archive.ubuntu.com/ubuntu main universe multiverse restricted
+
+        packages:
+          - unzip
+          - docker
+          
+        runcmd:
+          - ls /
+          - sudo useradd cicd
+          - echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCdXBIbI7AsQIkiUIkzBqsxvS1iuRR3R+nuumn5o3xLmZh+7yH7PndQOD+jX2s/H0c7i78X0h18mO0Mmqdwn1XfabOhKyxAc094c8kZuvsQDrzRaEFZ2TajaqCYbkL1vbjIJNRUuvZKYcXXf75F2bh9s/W+2vtUv1bfusJwjK6FTTiFLUqwDGF01JSPvBkNeyITuvjWcgVmLY8VEBVYHrG6fgP9rqS0HKQ4NLdgwfrMkQLc/yNCquQaSZgXPVMulBrSLm/PRo1srFaFsci2N/h+LIQH/ezk8pjJ3glJJQdn4zZnJjmH+o8rvY9L/0Qyj6l4oIzgPfi+ysnQk8ChJguh ec2-cli-tools-ami" >> /tmp/ssh.user.pub
+          - cat /tmp/ssh.user.pub
+          - sudo mkdir /home/cicd/.ssh
+          - sudo cp /tmp/ssh.user.pub /home/cicd/.ssh/authorized_keys
+          - echo "created authorized_keys"
+          - sudo chmod 600 /home/cicd/.ssh/authorized_keys
+          - sudo chown cicd:cicd /home/cicd/.ssh
+          - sudo chown cicd:cicd /home/cicd/.ssh/authorized_keys
+          - sudo ls -al /home/cicd/.ssh
+          - sudo service docker start
+          - sudo usermod -aG docker ec2-user
+          - sudo usermod -aG docker cicd
+          - sudo cat /etc/sysconfig/docker
+          - sudo echo "cicd ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/cloud-init
+          - sudo sed 's/^OPTIONS\=\"--default-ulimit/OPTIONS\=\"-H tcp:\/\/0.0.0.0:32998 -H unix:\/\/\/var\/run\/docker.sock --default-ulimit/' /etc/sysconfig/docker > /tmp/docker
+          - sudo cp /tmp/docker /etc/sysconfig/docker
+          - sudo service docker restart
+      constraints:
+        - tag: '${input.environment}'
+  Cloud_Network_1:
+    type: Cloud.Network
+    metadata:
+      layoutPosition:
+        - 1
+        - 0
+    properties:
+      networkType: existing
+      constraints:
+        - tag: '${input.environment}'

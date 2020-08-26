@@ -1,0 +1,96 @@
+# *************************************************************************
+# 
+# This template creates a Docker host on EC2 and sets the correct SG 
+#     settings to allow it to be accessible.  It creates a "cicd" user
+#     that runs the docker service.
+# SETUP/PREREQS:
+#    * org:jrl tags are used for the cloud zone and network.  This 
+#              can be adjusted in the inputs
+#    * ubuntu-2 image mapping must be in place
+# 
+# *************************************************************************
+inputs:
+  cloud:
+    type: string
+    title: Cloud for Deployment
+    enum:
+      - 'org:jrl'
+    default: 'org:jrl'
+  Web_Server_Count:
+    type: integer
+    default: 1
+    title: Number of web servers
+    minimum: 1
+    maximum: 4
+  flavor:
+    type: string
+    enum:
+      - small
+      - medium
+    default: small
+    title: Flavor / Size
+resources:
+  Cloud_LoadBalancer_1:
+    type: Cloud.LoadBalancer
+    metadata:
+      layoutPosition:
+        - 0
+        - 1
+    properties:
+      routes:
+        - port: '80'
+          protocol: HTTP
+          instancePort: '80'
+          instanceProtocol: HTTP
+          healthCheckConfiguration:
+            port: '80'
+            urlPath: /
+            protocol: HTTP
+            timeoutSeconds: 5
+            intervalSeconds: 10
+            healthyThreshold: 2
+            unhealthyThreshold: 9
+      instances: '${resource.Cloud_Machine_1[*].id}'
+      internetFacing: true
+      network: '${resource.Cloud_Network_1.id}'
+  Cloud_Machine_1:
+    type: Cloud.Machine
+    metadata:
+      layoutPosition:
+        - 0
+        - 2
+    properties:
+      image: ubuntu-2
+      flavor: '${input.flavor}'
+      constraints:
+        - tag: '${input.cloud}'
+      networks:
+        - network: '${resource.Cloud_Network_1.id}'
+      count: '${input.Web_Server_Count}'
+      cloudConfig: |
+        packages:
+          - nginx
+        runcmd:
+          - echo ${resource.Cloud_Network_1.networks[0].address}
+          - /usr/bin/git clone https://github.com/codyde/frontend-demoapp /tmp/cas-demo-application
+          - echo install node
+          - /usr/bin/curl -sL https://deb.nodesource.com/setup_10.x | sudo bash -
+          - /usr/bin/apt install nodejs -y
+          - /usr/bin/npm install -g @angular/cli
+          - cd /tmp/cas-demo-application && /usr/bin/npm install
+          - /usr/bin/ng build --prod
+          - sed -i 's/CAS Demo Application/vRealize Automation Demo - ${env.deploymentName}/' /tmp/cas-demo-application/src/index.html
+          - sed -i 's/ClarityUI/ClarityUI<br>Requested by ${env.requestedBy}/' /tmp/cas-demo-application/src/index.html
+          - /bin/cp -R /tmp/cas-demo-application/src/* /usr/share/nginx/html/
+          - /bin/sed -i "s@root /var/www/html@root /usr/share/nginx/html@" /etc/nginx/sites-available/default
+          - /bin/systemctl restart nginx
+  Cloud_Network_1:
+    type: Cloud.Network
+    metadata:
+      layoutPosition:
+        - 1
+        - 0
+    properties:
+      networkType: existing
+      constraints:
+        - tag: '${input.cloud}'
