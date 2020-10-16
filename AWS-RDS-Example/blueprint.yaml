@@ -1,0 +1,51 @@
+formatVersion: 1
+inputs:
+  deploy_region:
+    type: string
+    default: us-west-2
+    title: Region
+    oneOf:
+      - title: US-West-2
+        const: us-west-2
+  instance_size:
+    type: string
+    default: db.t3.small
+    title: Instance Size
+    oneOf:
+      - title: Small
+        const: db.t3.small
+      - title: Medium
+        const: db.t3.medium
+  master_username:
+    type: string
+    title: Master Username
+    default: dbadmin
+  master_password:
+    type: string
+    encrypted: true
+    title: Master Default Password
+resources:
+  Cloud_Service_AWS_RDS_Cluster_1:
+    type: Cloud.Service.AWS.RDS.Cluster
+    metadata:
+      layoutPosition:
+        - 0
+        - 0
+    properties:
+      region: '${input.deploy_region}'
+      account: MY-AWS-CLOUD-ACCOUNT-GOES-HERE
+      master_username: '${input.master_username}'
+      master_password: '${input.master_password}'
+      skip_final_snapshot: true
+  Cloud_Service_AWS_RDS_Cluster_Instance_1:
+    type: Cloud.Service.AWS.RDS.Cluster.Instance
+    metadata:
+      layoutPosition:
+        - 1
+        - 1
+    properties:
+      region: '${input.deploy_region}'
+      account: MY-AWS-CLOUD-ACCOUNT-GOES-HERE
+      identifier: rds-instance-1
+      instance_class: '${input.instance_size}'
+      cluster_identifier: '${resource.Cloud_Service_AWS_RDS_Cluster_1.id}'
